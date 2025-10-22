@@ -1,4 +1,4 @@
-import dash
+ import dash
 from dash import dcc, html, Input, Output, State
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
@@ -59,6 +59,17 @@ def create_lat_lon_sphere():
     )
     return fig
 
+# --- CORRECCIÓN: Crear una figura inicial para el mapa de coordenadas ---
+initial_coord_map_fig = go.Figure(go.Scattermapbox(
+    lat=[23.63], lon=[-102.55], mode='markers', marker=go.scattermapbox.Marker(size=14, color='red')
+))
+initial_coord_map_fig.update_layout(
+    mapbox_style="open-street-map",
+    mapbox=dict(center=go.layout.mapbox.Center(lat=23.63, lon=-102.55), zoom=3),
+    margin={"r":0,"t":0,"l":0,"b":0}
+)
+
+
 # --- Layout de la App ---
 app.layout = dbc.Container([
     dbc.Row(dbc.Col(html.H1("Dashboard de Conceptos de Geografía (U.1)", className="text-center my-4"))),
@@ -80,7 +91,6 @@ app.layout = dbc.Container([
                         html.H5("Proyecciones Cartográficas"),
                         html.P("Método para representar la superficie curva de la Tierra en un plano."),
                         dbc.RadioItems(id='projection-selector', options=[{'label': 'Cilíndrica', 'value': 'cylindrical stereographic'}, {'label': 'Cónica', 'value': 'conic conformal'}, {'label': 'Azimutal / Polar', 'value': 'azimuthal equidistant'}], value='cylindrical stereographic', inline=True),
-                        # --- CORRECCIÓN: Se define la altura aquí para evitar que el gráfico colapse ---
                         dcc.Graph(id='projection-map-graph', style={'height': '350px'}),
                         html.Div(id='projection-description', className="mt-2 text-muted")
                     ], md=6)
@@ -108,7 +118,12 @@ app.layout = dbc.Container([
                     dbc.Col([
                         html.P(html.B("Latitud:")), html.P("Distancia angular desde el Ecuador (0°). Las líneas horizontales se llaman Paralelos."),
                         html.P(html.B("Longitud:")), html.P("Distancia angular desde el Meridiano de Greenwich (0°). Las líneas verticales se llaman Meridianos."),
-                        dcc.Graph(id='interactive-coord-map', style={'height': '40vh'}),
+                        # --- CORRECCIÓN: Asignar la figura inicial al componente ---
+                        dcc.Graph(
+                            id='interactive-coord-map',
+                            style={'height': '40vh'},
+                            figure=initial_coord_map_fig
+                        ),
                         html.Div(id='coordinates-info-text', className="lead mt-3", children="Haz clic en el mapa 2D para ver las coordenadas.")
                     ], md=6),
                     dbc.Col(
@@ -134,7 +149,6 @@ app.layout = dbc.Container([
                         dcc.Slider(id='target-timezone-slider', min=-12, max=14, step=1, value=-6, marks={i: str(i) for i in range(-12, 15, 2)}),
                         html.Div(id='timezone-result', className="lead fw-bold mt-4 p-3 bg-light rounded text-center")
                     ], md=5),
-                    # --- CORRECCIÓN: Se define la altura aquí para evitar que el gráfico colapse ---
                     dbc.Col(dcc.Graph(id='timezone-map-graph', style={'height': '450px'}), md=7)
                 ])
             ]), className="my-3")
@@ -142,12 +156,11 @@ app.layout = dbc.Container([
     ])
 ], fluid=True)
 
-# --- Callbacks ---
+# --- Callbacks (sin cambios) ---
 @app.callback([Output('projection-map-graph', 'figure'), Output('projection-description', 'children')], Input('projection-selector', 'value'))
 def update_map_projection(projection_type):
     fig = go.Figure(go.Scattergeo())
     fig.update_geos(projection_type=projection_type, showcoastlines=True, showland=True, landcolor="LightGreen", showocean=True, oceancolor="LightBlue")
-    # La altura en el layout es más importante, pero mantenerla aquí es una buena práctica.
     fig.update_layout(height=350, margin={"r":0,"t":20,"l":0,"b":0})
     descriptions = {'cylindrical stereographic': "Cilíndrica: Ideal para zonas ecuatoriales.", 'conic conformal': "Cónica: Adecuada para latitudes medias.", 'azimuthal equidistant': "Azimutal: Útil para regiones polares."}
     return fig, descriptions.get(projection_type, "")
@@ -202,7 +215,6 @@ def calculate_time_zone(base_time, base_tz, target_tz):
     fig.add_trace(go.Scattergeo(lon=[base_lon], lat=[30], mode='markers', marker=dict(color='blue', size=10, symbol='star'), name='Referencia'))
     fig.add_trace(go.Scattergeo(lon=[target_lon], lat=[30], mode='markers', marker=dict(color='red', size=10, symbol='star'), name='Objetivo'))
     fig.update_geos(projection_type="natural earth", showland=True, landcolor="lightgrey", showocean=True, oceancolor="lightblue")
-    # La altura en el layout es más importante, pero mantenerla aquí es una buena práctica.
     fig.update_layout(height=450, margin={"r":0,"t":20,"l":0,"b":0}, legend=dict(x=0.01, y=0.99))
     return result_text, fig
 
