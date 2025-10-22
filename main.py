@@ -189,4 +189,5 @@ def calculate_time_zone(base_time, base_tz, target_tz):
 
 # --- Ejecutar la App ---
 if __name__ == '__main__':
-    app.run(debug=True)
+
+    app.run(debug=False)
