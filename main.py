@@ -9,7 +9,7 @@ import datetime
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.LUMEN], suppress_callback_exceptions=False)
 server = app.server # Para despliegue
 
-# --- Funciones de Ayuda ---
+# --- Funciones de Ayuda (sin cambios) ---
 def create_geoid_sphere_figure():
     u = np.linspace(0, 2 * np.pi, 100)
     v = np.linspace(0, np.pi, 100)
@@ -22,11 +22,14 @@ def create_geoid_sphere_figure():
     fig = go.Figure()
     fig.add_trace(go.Surface(x=x_s, y=y_s, z=z_s, colorscale='Blues', showscale=False, opacity=0.7, name='Esfera Perfecta'))
     fig.add_trace(go.Surface(x=x_g, y=y_g, z=z_g, colorscale='Greys', showscale=False, opacity=0.6, name='Geoide (Exagerado)'))
-    fig.update_layout(title='La Tierra: Geoide vs. Esfera Perfecta', scene=dict(xaxis_title='Eje X', yaxis_title='Eje Y', zaxis_title='Eje Z (Rotación)'), margin=dict(l=0, r=0, b=0, t=40))
+    fig.update_layout(
+        title='La Tierra: Geoide vs. Esfera Perfecta',
+        scene=dict(xaxis_title='Eje X', yaxis_title='Eje Y', zaxis_title='Eje Z (Rotación)', aspectmode='cube'),
+        margin=dict(l=0, r=0, b=0, t=40)
+    )
     return fig
 
 def create_lat_lon_sphere():
-    """Crea una esfera 3D para ilustrar Latitud y Longitud."""
     fig = go.Figure()
     u, v = np.linspace(0, 2 * np.pi, 50), np.linspace(0, np.pi, 50)
     x = np.outer(np.cos(u), np.sin(v))
@@ -38,7 +41,6 @@ def create_lat_lon_sphere():
     v_meridian = np.linspace(0, np.pi, 100)
     fig.add_trace(go.Scatter3d(x=np.cos(v_meridian), y=np.zeros_like(v_meridian), z=np.sin(v_meridian - np.pi/2), mode='lines', line=dict(color='green', width=5), name='Meridiano de Greenwich (Longitud 0°)'))
     
-    # --- CORRECCIÓN APLICADA AQUÍ ---
     for lat in [-60, -30, 30, 60]:
         rad = np.deg2rad(lat)
         r = np.cos(rad)
@@ -49,7 +51,12 @@ def create_lat_lon_sphere():
         rad = np.deg2rad(lon)
         fig.add_trace(go.Scatter3d(x=np.cos(rad)*np.cos(v_meridian), y=np.sin(rad)*np.cos(v_meridian), z=np.sin(v_meridian - np.pi/2), mode='lines', line=dict(color='green', width=2, dash='dot'), showlegend=False))
     
-    fig.update_layout(title="Sistema de Coordenadas Geográficas", margin=dict(l=0, r=0, b=0, t=40), scene=dict(aspectmode='data'), legend=dict(x=0, y=1))
+    fig.update_layout(
+        title="Sistema de Coordenadas Geográficas",
+        margin=dict(l=0, r=0, b=0, t=40),
+        scene=dict(aspectmode='cube'),
+        legend=dict(x=0, y=1)
+    )
     return fig
 
 # --- Layout de la App ---
@@ -64,13 +71,17 @@ app.layout = dbc.Container([
                     dbc.Col([
                         html.H5("La Forma de la Tierra"),
                         html.P("La Tierra es un geoide. El gráfico compara una esfera (azul) con un geoide exagerado (gris) para resaltar el achatamiento polar."),
-                        dcc.Graph(figure=create_geoid_sphere_figure())
+                        dcc.Graph(
+                            figure=create_geoid_sphere_figure(),
+                            style={'height': '450px'}
+                        )
                     ], md=6),
                     dbc.Col([
                         html.H5("Proyecciones Cartográficas"),
                         html.P("Método para representar la superficie curva de la Tierra en un plano."),
                         dbc.RadioItems(id='projection-selector', options=[{'label': 'Cilíndrica', 'value': 'cylindrical stereographic'}, {'label': 'Cónica', 'value': 'conic conformal'}, {'label': 'Azimutal / Polar', 'value': 'azimuthal equidistant'}], value='cylindrical stereographic', inline=True),
-                        dcc.Graph(id='projection-map-graph'),
+                        # --- CORRECCIÓN: Se define la altura aquí para evitar que el gráfico colapse ---
+                        dcc.Graph(id='projection-map-graph', style={'height': '350px'}),
                         html.Div(id='projection-description', className="mt-2 text-muted")
                     ], md=6)
                 ])
@@ -100,7 +111,12 @@ app.layout = dbc.Container([
                         dcc.Graph(id='interactive-coord-map', style={'height': '40vh'}),
                         html.Div(id='coordinates-info-text', className="lead mt-3", children="Haz clic en el mapa 2D para ver las coordenadas.")
                     ], md=6),
-                    dbc.Col(dcc.Graph(figure=create_lat_lon_sphere()), md=6)
+                    dbc.Col(
+                        dcc.Graph(
+                            figure=create_lat_lon_sphere(),
+                            style={'height': '450px'}
+                        ), md=6
+                    )
                 ])
             ]), className="my-3")
         ]),
@@ -118,7 +134,8 @@ app.layout = dbc.Container([
                         dcc.Slider(id='target-timezone-slider', min=-12, max=14, step=1, value=-6, marks={i: str(i) for i in range(-12, 15, 2)}),
                         html.Div(id='timezone-result', className="lead fw-bold mt-4 p-3 bg-light rounded text-center")
                     ], md=5),
-                    dbc.Col(dcc.Graph(id='timezone-map-graph'), md=7)
+                    # --- CORRECCIÓN: Se define la altura aquí para evitar que el gráfico colapse ---
+                    dbc.Col(dcc.Graph(id='timezone-map-graph', style={'height': '450px'}), md=7)
                 ])
             ]), className="my-3")
         ]),
@@ -130,7 +147,8 @@ app.layout = dbc.Container([
 def update_map_projection(projection_type):
     fig = go.Figure(go.Scattergeo())
     fig.update_geos(projection_type=projection_type, showcoastlines=True, showland=True, landcolor="LightGreen", showocean=True, oceancolor="LightBlue")
-    fig.update_layout(height=300, margin={"r":0,"t":20,"l":0,"b":0})
+    # La altura en el layout es más importante, pero mantenerla aquí es una buena práctica.
+    fig.update_layout(height=350, margin={"r":0,"t":20,"l":0,"b":0})
     descriptions = {'cylindrical stereographic': "Cilíndrica: Ideal para zonas ecuatoriales.", 'conic conformal': "Cónica: Adecuada para latitudes medias.", 'azimuthal equidistant': "Azimutal: Útil para regiones polares."}
     return fig, descriptions.get(projection_type, "")
 
@@ -184,13 +202,10 @@ def calculate_time_zone(base_time, base_tz, target_tz):
     fig.add_trace(go.Scattergeo(lon=[base_lon], lat=[30], mode='markers', marker=dict(color='blue', size=10, symbol='star'), name='Referencia'))
     fig.add_trace(go.Scattergeo(lon=[target_lon], lat=[30], mode='markers', marker=dict(color='red', size=10, symbol='star'), name='Objetivo'))
     fig.update_geos(projection_type="natural earth", showland=True, landcolor="lightgrey", showocean=True, oceancolor="lightblue")
-    fig.update_layout(height=400, margin={"r":0,"t":20,"l":0,"b":0}, legend=dict(x=0.01, y=0.99))
+    # La altura en el layout es más importante, pero mantenerla aquí es una buena práctica.
+    fig.update_layout(height=450, margin={"r":0,"t":20,"l":0,"b":0}, legend=dict(x=0.01, y=0.99))
     return result_text, fig
 
-# --- Ejecutar la App ---
+# --- Ejecuta la app
 if __name__ == '__main__':
-
-
     app.run(debug=False)
-
-
