@@ -1,6 +1,7 @@
 import dash
 from dash import dcc, html, Input, Output, State
 import plotly.graph_objects as go
+import dash_bootstrap_components as dbc
 import numpy as np
 import datetime
 
@@ -190,3 +191,4 @@ def calculate_time_zone(base_time, base_tz, target_tz):
 if __name__ == '__main__':
 
     app.run(debug=False)
+
