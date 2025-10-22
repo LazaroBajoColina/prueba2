@@ -206,6 +206,6 @@ def calculate_time_zone(base_time, base_tz, target_tz):
     fig.update_layout(height=450, margin={"r":0,"t":20,"l":0,"b":0}, legend=dict(x=0.01, y=0.99))
     return result_text, fig
 
-# --- Ejecuta la app
+# --- Ejecutar la App ---
 if __name__ == '__main__':
     app.run(debug=False)
