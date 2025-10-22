@@ -6,7 +6,7 @@ import numpy as np
 import datetime
 
 # --- Inicializar la App Dash ---
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.LUMEN], suppress_callback_exceptions=True)
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.LUMEN], suppress_callback_exceptions=False)
 server = app.server # Para despliegue
 
 # --- Funciones de Ayuda ---
@@ -189,5 +189,6 @@ def calculate_time_zone(base_time, base_tz, target_tz):
 
 # --- Ejecutar la App ---
 if __name__ == '__main__':
+
 
     app.run(debug=False)
